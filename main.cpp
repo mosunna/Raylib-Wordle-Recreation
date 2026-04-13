@@ -14,10 +14,18 @@ Enter Key and Guess Submission:
     Increment currentRow and currentGuess
 
 -Guess checking
-    Color evaluation for
+    Color evaluation for guesses that player makes
+    Deep checks for words that contain the correct letters, but correct guess has multiple of the letter
 
 
-    //TESTING CHANGES TO PULL TO ANOTHER PC
+    Update grid to have colors... (Do AFTER game is actually working as intended)
+
+-Gameplay status
+    User guesses word: Display how many guesses it took the player to get the correct word
+    
+    User doesn't guess within the 6 guesses: Display a game over, display what the correct word was
+                                             A "Play Again?" option. If yes, restart game with new word, 
+                                             If no, close window.
 
 
 
