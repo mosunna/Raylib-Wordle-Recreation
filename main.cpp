@@ -11,9 +11,9 @@ using namespace std;
     Deep checks for words that contain the correct letters, but correct guess has multiple of the letter
 
 
-    Update grid to have colors... (Do AFTER game is actually working as intended)
+    Update grid to have colors... possibly with animation (Do AFTER game is actually working as intended)
 
--Gameplay status
+-Gameplay status(post game)
     User guesses word: Display how many guesses it took the player to get the correct word
 
     User doesn't guess within the 6 guesses: Display a game over, display what the correct word was
