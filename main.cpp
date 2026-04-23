@@ -11,9 +11,9 @@ using namespace std;
     Deep checks for words that contain the correct letters, but correct guess has multiple of the letter
 
 
-    Update grid to have colors... possibly with animation (Do AFTER game is actually working as intended)
+    Update grid to have colors... (Do AFTER game is actually working as intended)
 
--Gameplay status(post game)
+-Gameplay status
     User guesses word: Display how many guesses it took the player to get the correct word
 
     User doesn't guess within the 6 guesses: Display a game over, display what the correct word was
@@ -54,6 +54,41 @@ string getTargetWord()
 
 }
 
+//Function responsible for determining the hint colors used in the grid for hints
+vector<int> giveFeedback(string gussedWord,	string targetWord)
+{
+	vector<int> hints(5,0); // 0 for gray ,1 for yellow, 2 for green
+	vector<int> usedLetters(5, false);
+
+	//For loop responsible for correct guess in correct position
+	for(int i = 0; i < gussedWord.length(); i++)
+	{
+		if(gussedWord[i] == targetWord[i])
+		{
+			hints[i] = 2;
+			usedLetters[i] = true;
+		}
+	}
+
+	//For loop responsible for a guess that contains the letter in the hidden word
+	for(int i = 0; i < gussedWord.length(); i++)
+	{
+		if(hints[i] == 0)
+		{
+			for(int j = 0; j <gussedWord.length(); j++)
+			{
+				if(usedLetters[j] == false && gussedWord[i] == targetWord[i])
+				{
+					hints[i] = 1;
+					usedLetters[j] = true;
+					break;
+				}
+			}
+		}
+	}
+	return hints;
+}
+
 
 int main ()
 {
@@ -72,6 +107,7 @@ int main ()
 	string currentGuess;
 	string targetWord = getTargetWord();
 	vector<string> previousGuesses; // vector to save valid previous guesses (used to update grid drawing)
+	vector<vector<int>> allHints; //Stores the hints for all guessed words
 	int currentRow = 0;
 
 	while(WindowShouldClose() == false) //Checks for if 'esc' key is pressed or if closed icon is pressed
@@ -122,9 +158,16 @@ int main ()
 			}
 			if(validWord == true)
 			{
-				previousGuesses.push_back(currentGuess);
+				
+				previousGuesses.push_back(currentGuess); //Saving previous guesss to print to grid
+				
+				//Pushing hintResults to the global hint vector
+				vector<int> hintResults = giveFeedback(currentGuess,targetWord);
+				allHints.push_back(hintResults);
+				
+				//Incrementing the grid grow and resetting currentGuess
 				currentRow++;
-				currentGuess = ""; //Setting currentGuess string to empty
+				currentGuess = ""; 
 
 			}
 
