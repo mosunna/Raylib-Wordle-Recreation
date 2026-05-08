@@ -6,14 +6,9 @@
 using namespace std;
 
 /* TO DO LIST:
--Guess checking
-    Color evaluation for guesses that player makes
-    Deep checks for words that contain the correct letters, but correct guess has multiple of the letter
-
-
-    Update grid to have colors... (Do AFTER game is actually working as intended)
 
 -Gameplay status
+	Ending the game after current guess is entered: Not allowing more guesses.
     User guesses word: Display how many guesses it took the player to get the correct word
 
     User doesn't guess within the 6 guesses: Display a game over, display what the correct word was
@@ -21,17 +16,91 @@ using namespace std;
                                              If no, close window.
 
 
+	Ending the game after winning with same play again options or not.  
 
 
 Visual keyboard:
-Copy the layout that the actual wordle has for it's keyboard
-
-
-
-
+	Completing the Key class
+	Drawing the keyboard, having drawings updated based off guess state of individual letter
+	Clicking the keyboard also being an option to enter letters to the grid
 
 
 */
+
+Color wordleGray = {58, 58, 60, 255};
+Color wordleYellow = {181, 159, 59, 255};
+Color wordleGreen = {83, 141, 78, 255};
+
+class Key
+{
+public:
+
+	Rectangle rect;
+	char letter;
+	int state; // -1 usused, 0 - gray, 1 -yellow , 2-green
+	Color color;
+
+	// Constructor
+	Key(float x, float y, float width, float height, char keyLetter)
+	{
+		rect = {x, y, width, height};
+
+		letter = keyLetter;
+
+		//Default unused state
+		state = -1;
+
+		//Default keyboard color
+		color = LIGHTGRAY;
+	}
+	
+	void draw()
+	{
+		DrawRectangleRec(rect, color);
+
+		DrawRectangleLines(rect.x,rect.y,rect.width,rect.height,BLACK);
+
+		int fontSize = 30;
+
+		int textWidth = MeasureText(TextFormat("%c", letter), fontSize);
+
+		int textX = rect.x + (rect.width - textWidth) / 2;
+
+		int textY = rect.y + (rect.height - fontSize) / 2;
+
+		DrawText(TextFormat("%c", letter),textX,textY,fontSize,WHITE);
+	}
+
+	//Updating color based off key state
+	void updateColor()
+	{
+		// Green
+		if(state == 2)
+		{
+			color = wordleGreen;
+		}
+
+		// Yellow
+		else if(state == 1)
+		{
+			color = wordleYellow;
+		}
+
+		// Gray
+		else if(state == 0)
+		{
+			color = wordleGray;
+		}
+
+		// Unused
+		else
+		{
+			color = LIGHTGRAY;
+		}
+	}
+};
+
+
 vector<string> wordList;
 string getTargetWord()
 {
@@ -77,7 +146,7 @@ vector<int> giveFeedback(string gussedWord,	string targetWord)
 		{
 			for(int j = 0; j <gussedWord.length(); j++)
 			{
-				if(usedLetters[j] == false && gussedWord[i] == targetWord[i])
+				if(usedLetters[j] == false && gussedWord[i] == targetWord[j])
 				{
 					hints[i] = 1;
 					usedLetters[j] = true;
@@ -98,16 +167,13 @@ int main ()
 	InitWindow(windowWidth, windowHeight, "Wordle!");
 	SetTargetFPS(60);
 
-	//Colors for grid hints
 	Color backgroundColor = {18, 18, 19, 255};
-	Color incorrectGuess = {240, 2, 23, 255};
-	Color closeGuess = {181, 159, 59, 255};
-	Color correctGuess = {115, 29, 43,255};
 
 	string currentGuess;
 	string targetWord = getTargetWord();
 	vector<string> previousGuesses; // vector to save valid previous guesses (used to update grid drawing)
 	vector<vector<int>> allHints; //Stores the hints for all guessed words
+	vector<Key> keyboard; 
 	int currentRow = 0;
 
 	while(WindowShouldClose() == false) //Checks for if 'esc' key is pressed or if closed icon is pressed
@@ -158,16 +224,16 @@ int main ()
 			}
 			if(validWord == true)
 			{
-				
+
 				previousGuesses.push_back(currentGuess); //Saving previous guesss to print to grid
-				
+
 				//Pushing hintResults to the global hint vector
 				vector<int> hintResults = giveFeedback(currentGuess,targetWord);
 				allHints.push_back(hintResults);
-				
+
 				//Incrementing the grid grow and resetting currentGuess
 				currentRow++;
-				currentGuess = ""; 
+				currentGuess = "";
 
 			}
 
@@ -175,63 +241,86 @@ int main ()
 
 
 		BeginDrawing();
+
 		//Drawing the background of the game
-		DrawRectangle(0,0, windowWidth, windowHeight, backgroundColor);
+		DrawRectangle(0, 0, windowWidth, windowHeight, backgroundColor);
 
 		DrawText(TextFormat("Row: %d Guess: %s", currentRow, currentGuess.c_str()), 10, 10, 20, RED);
 
-		//Drawing the word guessing grid
 		int tileSize = 70;
-		int spacing = 10;
+		int spacing  = 10;
 		int rows = 6;
 		int cols = 5;
 
-
 		//Size of individual guessing grid
 		int gridWidth = (tileSize * cols) + (spacing * (cols - 1));
-		//Guessing grid orientation on screen
-		int startX = (windowWidth - gridWidth) / 2;
-		int startY = 100;
+		int startX    = (windowWidth - gridWidth) / 2;
+		int startY    = 100;
 
 		// Double loop to draw empty tiles
-		for (int row = 0; row < rows; row++)
+		for(int row = 0; row < rows; row++)
 		{
-			for (int col = 0; col < cols; col++)
+			for(int col = 0; col < cols; col++)
 			{
 				int tileX = startX + col * (tileSize + spacing);
 				int tileY = startY + row * (tileSize + spacing);
 
-				DrawRectangleLines(tileX, tileY, tileSize, tileSize, DARKGRAY);
-
-				if (row < currentRow)
+				if(row < currentRow)
 				{
-					char letter = previousGuesses[row][col];
+					// Submitted row: fill tile with hint color
+					Color tileColor;
+					int hint = allHints[row][col];
 
+					if(hint == 2)
+					{
+						tileColor = wordleGreen;
+					}     
+					 
+					else if(hint == 1)
+					{
+						tileColor = wordleYellow;
+					}  
+
+					else
+					{
+						tileColor = wordleGray;
+					}
+
+					DrawRectangle(tileX, tileY, tileSize, tileSize, tileColor);
+					DrawRectangleLines(tileX, tileY, tileSize, tileSize, tileColor); // Border matches fill
+
+					char letter = previousGuesses[row][col];
+					int fontSize   = 35;
+					int textWidth  = MeasureText(TextFormat("%c", letter), fontSize);
+					int textX      = tileX + (tileSize - textWidth) / 2;
+					int textY      = tileY + (tileSize - fontSize) / 2;
+
+					DrawText(TextFormat("%c", letter), textX, textY, fontSize, RAYWHITE);
+				}
+
+				else if(row == currentRow && col < (int)currentGuess.length())
+				{
+					// Active row: show letters being typed, no color yet
+					DrawRectangleLines(tileX, tileY, tileSize, tileSize, DARKGRAY);
+
+					char letter = currentGuess[col];
 					int fontSize = 35;
-					int textWidth = MeasureText(TextFormat("%c", letter), fontSize);
+					int textWidth  = MeasureText(TextFormat("%c", letter), fontSize);
 					int textX = tileX + (tileSize - textWidth) / 2;
 					int textY = tileY + (tileSize - fontSize) / 2;
 
 					DrawText(TextFormat("%c", letter), textX, textY, fontSize, RAYWHITE);
 				}
 
-				else if (row == currentRow && col < (int)currentGuess.length())
+				else
 				{
-					char letter = currentGuess[col];
-
-					int fontSize = 35;
-					int textWidth = MeasureText(TextFormat("%c", letter), fontSize);
-					int textX = tileX + (tileSize - textWidth) / 2;
-					int textY = tileY + (tileSize - fontSize) / 2;
-
-					DrawText(TextFormat("%c", letter), textX, textY, fontSize, RAYWHITE);
+					DrawRectangleLines(tileX, tileY, tileSize, tileSize, DARKGRAY);
 				}
 			}
 		}
 
 		EndDrawing();
 	}
-
 
 	CloseWindow();
 	return 0;
