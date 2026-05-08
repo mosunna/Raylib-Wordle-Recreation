@@ -8,23 +8,26 @@ using namespace std;
 /* TO DO LIST:
 
 -Gameplay status
-	Ending the game after current guess is entered: Not allowing more guesses.
-    User guesses word: Display how many guesses it took the player to get the correct word
+	Displaying when the user guesses the word, number of guesses it took, and stopping all user input.
 
-    User doesn't guess within the 6 guesses: Display a game over, display what the correct word was
+    User doesn't guess within the 6 guesses: Display a game over of some sort: display what the correct word was
                                              A "Play Again?" option. If yes, restart game with new word,
-                                             If no, close window.
+                                             If no, close window(end game).
 
 
-	Ending the game after winning with same play again options or not.  
+	For Play again option: resetting game states and clearing vectors.
 
 
 Visual keyboard:
 	Completing the Key class
-	Drawing the keyboard, having drawings updated based off guess state of individual letter
-	Clicking the keyboard also being an option to enter letters to the grid
+	Drawing the keyboard, having drawings updated based off guess state of individual letter.
+	Clicking the keyboard also being an option to enter letters to the grid.
+	Resetting keyboard states when user hits play again.
 
 
+
+Code Organization:
+	Reformatting code into functions to keep main simple.
 */
 
 Color wordleGray = {58, 58, 60, 255};
@@ -165,6 +168,7 @@ int main ()
 	const int windowWidth = 800;
 	const int windowHeight = 900;
 	InitWindow(windowWidth, windowHeight, "Wordle!");
+	Font clearSans = LoadFontEx("ClearSans-Regular.ttf", 64, 0, 0);
 	SetTargetFPS(60);
 
 	Color backgroundColor = {18, 18, 19, 255};
@@ -175,6 +179,8 @@ int main ()
 	vector<vector<int>> allHints; //Stores the hints for all guessed words
 	vector<Key> keyboard; 
 	int currentRow = 0;
+	bool gameWon = false;
+	bool gameOver = false;
 
 	while(WindowShouldClose() == false) //Checks for if 'esc' key is pressed or if closed icon is pressed
 	{
@@ -231,8 +237,18 @@ int main ()
 				vector<int> hintResults = giveFeedback(currentGuess,targetWord);
 				allHints.push_back(hintResults);
 
+				if(currentGuess == targetWord)
+				{
+					gameWon = true;
+					gameOver = true;
+				}
+
 				//Incrementing the grid grow and resetting currentGuess
 				currentRow++;
+				if(currentRow == 6 && gameWon == false)
+				{
+					gameOver = true;
+				}
 				currentGuess = "";
 
 			}
@@ -290,12 +306,19 @@ int main ()
 					DrawRectangleLines(tileX, tileY, tileSize, tileSize, tileColor); // Border matches fill
 
 					char letter = previousGuesses[row][col];
-					int fontSize   = 35;
-					int textWidth  = MeasureText(TextFormat("%c", letter), fontSize);
-					int textX      = tileX + (tileSize - textWidth) / 2;
-					int textY      = tileY + (tileSize - fontSize) / 2;
+					int fontSize = 42;
+					/*
+					int textWidth = MeasureText(TextFormat("%c", letter), fontSize);
+					int textX = tileX + (tileSize - textWidth) / 2;
+					int textY = tileY + (tileSize - fontSize) / 2;
+					*/
+					int textWidth = MeasureTextEx(clearSans, TextFormat("%c", letter), fontSize, 1).x;
+					int textX = tileX + (tileSize - textWidth) / 2;
+					int textY = tileY + (tileSize - fontSize) / 2;
+					DrawTextEx(clearSans, TextFormat("%c", letter), {(float)textX, (float)textY}, fontSize, 1, RAYWHITE);
 
-					DrawText(TextFormat("%c", letter), textX, textY, fontSize, RAYWHITE);
+					//DrawText(TextFormat("%c", letter), textX, textY, fontSize, RAYWHITE);
+
 				}
 
 				else if(row == currentRow && col < (int)currentGuess.length())
@@ -304,12 +327,18 @@ int main ()
 					DrawRectangleLines(tileX, tileY, tileSize, tileSize, DARKGRAY);
 
 					char letter = currentGuess[col];
-					int fontSize = 35;
-					int textWidth  = MeasureText(TextFormat("%c", letter), fontSize);
+					int fontSize = 42;
+					/*
+					int textWidth = MeasureText(TextFormat("%c", letter), fontSize);
 					int textX = tileX + (tileSize - textWidth) / 2;
 					int textY = tileY + (tileSize - fontSize) / 2;
+					*/
+					int textWidth = MeasureTextEx(clearSans, TextFormat("%c", letter), fontSize, 1).x;
+					int textX = tileX + (tileSize - textWidth) / 2;
+					int textY = tileY + (tileSize - fontSize) / 2;
+					DrawTextEx(clearSans, TextFormat("%c", letter), {(float)textX, (float)textY}, fontSize, 1, RAYWHITE);
 
-					DrawText(TextFormat("%c", letter), textX, textY, fontSize, RAYWHITE);
+					//DrawText(TextFormat("%c", letter), textX, textY, fontSize, RAYWHITE);
 				}
 
 				else
@@ -318,7 +347,7 @@ int main ()
 				}
 			}
 		}
-
+		UnloadFont(clearSans);
 		EndDrawing();
 	}
 
