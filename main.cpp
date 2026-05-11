@@ -7,6 +7,10 @@ using namespace std;
 
 /* TO DO LIST:
 
+Correct word guessing: 
+
+Using valid guess.txt and answerSet.txt 
+
 Visual keyboard:
 	Creating a submit guess and backspace key on that users can click
 
@@ -90,24 +94,33 @@ public:
 };
 
 //Loads words from wordList file, picks a random word,stores it to global wordList vector
-vector<string> wordList;
+vector<string> wordList; //Valid guesses the user can pick from
+vector<string> answerList; //Valid solutions the game can pick from
 string getTargetWord()
 {
 	wordList.clear();
+	answerList.clear();
 
-
-	ifstream file("WordList.txt");
+	//Loading valid guesses
+	ifstream guessFile("wordle-allowed-guesses.txt");
 	string word;
-
-	while(getline(file, word))
+	while(getline(guessFile, word))
 	{
 		wordList.push_back(word);
 	}
+	guessFile.close();
 
-	file.close();
+	//Loading valid answers
+	ifstream answerFile("wordle-answers-alphabetical.txt");
+	while(getline(answerFile, word))
+	{
+		answerList.push_back(word);
+		wordList.push_back(word);
+	}
+	answerFile.close();
 
-	int randomIndex = GetRandomValue(0, wordList.size() - 1);
-	string targetWord = wordList[randomIndex];
+	int randomIndex = GetRandomValue(0, answerList.size() - 1);
+	string targetWord = answerList[randomIndex];
 
 	//Converting the select word from wordList to all uppercase to match user input
 	for(int i = 0; i < targetWord.length(); i++)
@@ -115,7 +128,7 @@ string getTargetWord()
 		targetWord[i] = toupper(targetWord[i]);
 	}
 
-	//string targetWord = "APPLE"; //HARDCODED FOR TESTING
+	//string targetWord = "WHIPS"; //HARDCODED FOR TESTING
 
 	return targetWord;
 
@@ -366,7 +379,7 @@ void drawGameOverScreen(Font clearSans, string &targetWord, int &currentRow, boo
 	const char* message;
 	if(gameWon == true && currentRow == 1)
 	{
-		message = TextFormat("You got Wordle in a single guess!", currentRow);
+		message = TextFormat("You got Wordle in %d guess!", currentRow);
 	}
 
 	else if(gameWon == true)
